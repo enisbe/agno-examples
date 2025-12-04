@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Report: The 2025 Agentic Python Framework Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Harmony -->
+    <!-- Application Structure Plan: The application is designed as an interactive dashboard to facilitate a non-linear exploration of the report's content. The structure progresses from a high-level summary to a deep-dive section and concludes with a comparative synthesis. A top navigation bar allows users to select a specific framework, dynamically updating the main content area. This avoids overwhelming the user with a long, linear document. The flow is: 1) Absorb key findings in the header. 2) Select a framework for detailed analysis. 3) Switch between frameworks to explore. 4) View the comparative analysis section with charts and tables to synthesize information for decision-making. This task-oriented structure is more usable and engaging than a static report, directly supporting the user's goal of evaluating and selecting a framework. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: GitHub Stars for each framework. -> Goal: Compare Popularity. -> Viz: Horizontal Bar Chart (Chart.js). -> Interaction: Hover for tooltips with exact values. -> Justification: Bar charts are excellent for direct comparison of discrete values. -> Library: Chart.js (Canvas).
+        - Report Info: Ratings for Learning Curve & Enterprise Readiness. -> Goal: Compare multi-dimensional profiles. -> Viz: Radar Chart (Chart.js). -> Interaction: Legend click to toggle framework visibility. -> Justification: Radar charts excel at showing the strengths and weaknesses of different items across multiple standardized variables, providing a quick "shape" profile for each framework. -> Library: Chart.js (Canvas).
+        - Report Info: Detailed framework analysis sections. -> Goal: Inform, Detail. -> Presentation: Dynamically updated HTML content blocks. -> Interaction: Click framework selector buttons to switch content. -> Justification: Hiding non-selected content reduces cognitive load and keeps the interface clean. -> Method: Vanilla JS DOM manipulation.
+        - Report Info: Strategic Recommendations. -> Goal: Guide, Inform. -> Presentation: Accordion UI. -> Interaction: Click to expand/collapse sections. -> Justification: Accordions organize dense text into manageable, user-triggered chunks. -> Method: Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .accordion-button.active + .accordion-content {
+            max-height: 1000px;
+        }
+        .nav-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-button.active {
+            background-color: #D87C5E;
+            color: #FFFFFF;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#333] mb-4">The 2025 Agentic Python Framework Ecosystem</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">An interactive analysis of the leading frameworks for building AI agents. This dashboard translates a comprehensive technical report into an explorable experience to aid in your strategic decision-making.</p>
+        </header>
+
+        <main>
+            <section id="framework-selector" class="mb-12">
+                <h2 class="text-2xl font-bold text-center text-[#333] mb-6">Select a Framework to Analyze</h2>
+                <div id="nav-container" class="flex flex-wrap justify-center gap-2 md:gap-4">
+                </div>
+            </section>
+
+            <section id="framework-details" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg min-h-[500px]">
+                <div id="details-content">
+                </div>
+            </section>
+            
+            <section id="comparative-analysis" class="my-16">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-[#333] mb-4">Comparative Analysis</h2>
+                    <p class="text-lg text-gray-600 max-w-3xl mx-auto">This section provides a visual comparison of the frameworks across key metrics. Use these charts and the summary table to quickly identify leaders and understand the trade-offs between different solutions.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-xl font-bold text-center mb-4">Popularity: GitHub Stars</h3>
+                        <div class="chart-container">
+                            <canvas id="popularityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-xl font-bold text-center mb-4">Framework Profile Comparison</h3>
+                        <div class="chart-container">
+                            <canvas id="profileChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg mt-12">
+                     <h3 class="text-2xl font-bold text-center mb-6">Framework Summary Matrix</h3>
+                     <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200 rounded-tl-lg">Framework</th>
+                                    <th class="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Primary Paradigm</th>
+                                    <th class="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Learning Curve</th>
+                                    <th class="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200">Enterprise Readiness</th>
+                                    <th class="py-3 px-4 bg-gray-100 font-bold uppercase text-sm text-gray-600 border-b border-gray-200 rounded-tr-lg">Ideal Use Cases</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table-body" class="text-gray-700">
+                            </tbody>
+                        </table>
+                     </div>
+                </div>
+            </section>
+
+            <section id="recommendations" class="my-16">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-[#333] mb-4">Strategic Recommendations</h2>
+                    <p class="text-lg text-gray-600 max-w-3xl mx-auto">Based on the analysis, here are strategic recommendations to guide your framework selection. Expand each section to explore the findings for different project types and future trends.</p>
+                </div>
+                <div id="accordion-container" class="max-w-4xl mx-auto space-y-4">
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-16 text-gray-500">
+            <p>Interactive Report generated from source material. &copy; 2025</p>
+        </footer>
+
+    </div>
+
+<script>
+const frameworkData = {
+    "Pydantic AI": {
+        popularity: { stars: 11400, downloads: 2894158, text: "Demonstrates significant and growing popularity, underpinned by the immense success of its parent library. Its PyPI package receives nearly 3 million downloads per month, amplified by the 'halo effect' from the core Pydantic library, which is a foundational dependency for nearly every other major AI framework." },
+        documentation: "Comprehensive, well-structured, and developer-focused. It includes a minimal 'Hello World,' real-world examples, an API reference, and is supported by strong third-party educational resources like DeepLearning.AI courses.",
+        learningCurve: { rating: 2, text: "Low to Medium. Remarkably low for developers familiar with FastAPI and Pydantic. The curve steepens when mastering advanced features like dependency injection and graph-based state machines for production-grade applications." },
+        enterpriseReadiness: { rating: 4, text: "Strongly positioned due to its focus on reliability and data integrity. Its core feature is the enforcement of structured, validated outputs, which eliminates a major source of instability. Seamless integration with Pydantic Logfire for observability and support from platforms like Portkey enhance its enterprise capabilities." },
+        longevity: "Exceptionally strong. Maintained by the stable and well-regarded Pydantic team, it's a strategic extension of a critical library in the Python ecosystem, ensuring long-term investment and support.",
+        adoptionRate: "High and accelerating. PyPI downloads and adoption by organizations like IBM and the Algorand Foundation point to a healthy and growing user base.",
+        uniqueFeatures: [
+            "**Pydantic-Native Validation and Parsing**: Guarantees structured, validated outputs with automatic retries.",
+            "**Python-Centric and Idiomatic Design**: Uses standard Python decorators and logic, avoiding complex DSLs.",
+            "**Integrated Dependency Injection**: Crucial for building testable and modular enterprise software.",
+            "**Graph Support for Complex Workflows**: `pydantic-graph` enables complex state machine definitions.",
+            "**Seamless Observability Integration**: Native integration with Pydantic Logfire for out-of-the-box monitoring."
+        ],
+        paradigm: "Structured Output & Validation",
+        idealUseCases: "API integrations, data extraction & processing, single-agent tasks requiring high reliability."
+    },
+    "LangGraph": {
+        popularity: { stars: 16700, downloads: 8080410, text: "Exceptional popularity, quickly becoming a dominant force. Its GitHub repository shows massive engagement, and its PyPI downloads are staggering at over 8 million per month. It's frequently cited as the go-to for complex, stateful multi-agent systems." },
+        documentation: "Extensive, with quickstarts, conceptual guides, and a detailed API reference. Supported by a free course, pre-built templates, and the `LangGraph Studio` visual IDE. Some developers note quirks inherited from the broader LangChain ecosystem.",
+        learningCurve: { rating: 1, text: "High. Consistently acknowledged as 'steep.' It requires developers to adopt a new mental model centered around state graphs, nodes, and edges. This complexity is a direct trade-off for fine-grained control and predictability." },
+        enterpriseReadiness: { rating: 5, text: "Its defining characteristic. Engineered for production with durable execution, persistence, checkpointing, and human-in-the-loop workflows. The `LangGraph Platform` and `LangSmith` provide a complete, enterprise-grade infrastructure and observability solution." },
+        longevity: "Secure. Backed by LangChain Inc., a prominent and well-funded company. LangGraph is a core strategic priority, representing the next stage of the company's evolution, ensuring significant long-term investment.",
+        adoptionRate: "Meteoric. Massive download volume and numerous, detailed enterprise case studies from companies like Cisco, Vodafone, and Bertelsmann signify an exceptionally strong and fast-growing adoption rate.",
+        uniqueFeatures: [
+            "**Cyclic Graph Architecture**: Allows for loops, essential for agentic reasoning patterns like ReAct.",
+            "**Centralized and Persistent State**: Enables auditable history and long-running, durable processes.",
+            "**Human-in-the-Loop Integration**: Trivial to interrupt, wait for human input, and resume workflows.",
+            "**Time Travel Debugging**: Allows inspection and rollback of the graph state to any previous step.",
+            "**Visual Development with LangGraph Studio**: A visual IDE to build, run, and debug complex graphs."
+        ],
+        paradigm: "Stateful Graph Orchestration",
+        idealUseCases: "Mission-critical business processes, complex multi-agent systems, long-running tasks."
+    },
+    "Agno": {
+        popularity: { stars: 31100, downloads: null, text: "Immense popularity, placing it in the highest echelon of community interest with over 31k GitHub stars. Community sentiment is highly positive, with users praising its simplicity, documentation, and performance." },
+        documentation: "Frequently cited as a key strength. Described by users as clear, well-structured, and superior to many alternatives. It provides a progressive learning experience with examples categorized by complexity and a helpful 'Cookbook'.",
+        learningCurve: { rating: 2, text: "Low to Medium. Designed for an intuitive developer experience. Users report it's simple and easy to use, with a clean and composable API. The learning path is structured to build concepts incrementally, avoiding cognitive overload." },
+        enterpriseReadiness: { rating: 4, text: "Built with production in mind, with a primary focus on high performance. Agents instantiate in microseconds with a minimal memory footprint, which is critical for scaled deployments. It offers built-in observability and is model-agnostic, preventing vendor lock-in." },
+        longevity: "Actively developed and backed by Agno AGI. High popularity and strong community engagement provide a solid foundation. Its strategic focus on performance and developer experience addresses a clear market need.",
+        adoptionRate: "Very high, as evidenced by top-tier GitHub metrics. It's frequently mentioned alongside LangGraph and CrewAI and is being integrated into other developer tools, pointing to a strong and accelerating adoption rate.",
+        uniqueFeatures: [
+            "**Extreme Performance**: Engineered for speed and low resource consumption (microseconds instantiation).",
+            "**Natively Multi-Modal**: Built from the ground up to handle text, image, audio, and video.",
+            "**Reasoning as a First-Class Citizen**: Provides multiple explicit approaches to improve agent reasoning.",
+            "**Advanced Multi-Agent Architecture**: Offers sophisticated 'Agent Teams' with multiple collaboration modes.",
+            "**Dual Model Output**: Uses a powerful model for reasoning and a smaller model for structured output."
+        ],
+        paradigm: "High-Performance Multi-Agent",
+        idealUseCases: "Highly scaled deployments, performance-critical applications, real-time systems."
+    },
+    "CrewAI": {
+        popularity: { stars: 35200, downloads: null, text: "Remarkable popularity, with an extraordinary 35.2k GitHub stars, placing it at the very top of the field. It's often recommended as the easiest framework to get started with, and over 100,000 developers have been certified through its courses." },
+        documentation: "Widely praised as a key strength. The official documentation is well-organized, comprehensive, and guides users from core concepts to advanced topics. A dedicated examples repository further enhances the learning experience.",
+        learningCurve: { rating: 3, text: "Low. Renowned for having one of the lowest learning curves. Its high-level, intuitive abstractions (`Agent`, `Task`, `Crew`) map directly to real-world concepts, allowing developers to achieve impressive results with minimal code." },
+        enterpriseReadiness: { rating: 5, text: "Strongly focused on enterprise use, with both a robust open-source framework and a commercial `CrewAI Enterprise` suite. The introduction of deterministic `Flows` and the `Crew Control Plane` platform provide the reliability, scalability, and security required by large organizations like PwC." },
+        longevity: "Very strong. Backed by CrewAI Inc., with a sustainable business model from its enterprise offering. The project is under continuous development and has a massive, growing community creating a powerful network effect.",
+        adoptionRate: "Exceptionally high. Trusted by major organizations like the U.S. Department of Defense, PepsiCo, and PwC. Surveys show a rapid adoption cycle, with many teams moving from concept to production within 30-60 days.",
+        uniqueFeatures: [
+            "**Role-Playing, Collaborative Agents**: Its core paradigm is defining agents with roles, goals, and backstories.",
+            "**Dual `Crews` and `Flows` Architecture**: Offers both autonomous (`Crews`) and deterministic (`Flows`) orchestration.",
+            "**Process-Oriented Approach**: Defines the collaboration pattern, providing a structured approach to task management.",
+            "**Standalone and Lightweight**: Built from scratch to be lean, fast, and flexible, without dependencies on other frameworks."
+        ],
+        paradigm: "Role-Based Collaboration",
+        idealUseCases: "Rapid prototyping, collaborative workflows (e.g., research, content creation), team automation."
+    },
+    "SmolAgents": {
+        popularity: { stars: 21800, downloads: 277696, text: "High popularity, particularly among developers who value simplicity and integration with the Hugging Face ecosystem. It has an impressive 21.8k GitHub stars and is featured in the official Hugging Face Agents Course." },
+        documentation: "Well-regarded for its clarity and practical focus. Hosted on the Hugging Face website, it includes a guided tour, tutorials on essential topics, and a collection of practical examples like agentic RAG and web browsing with vision models.",
+        learningCurve: { rating: 3, text: "Low. Designed to be beginner-friendly. The core logic is in a single, ~1,000-line file, making the codebase transparent. Defining tools is as simple as writing a Python function with a decorator, making it one of the easiest frameworks to start with." },
+        enterpriseReadiness: { rating: 2, text: "Mixed profile. Its primary strength is security, with multiple options for sandboxed code execution. However, it lacks some built-in features for production systems like streaming and human-in-the-loop workflows, making it better for contained components rather than end-to-end orchestration." },
+        longevity: "Strongly assured by its creator, Hugging Face. As a key part of their strategy, it is under active development and deeply integrated with the Hugging Face Hub, ensuring it will evolve with the broader AI landscape.",
+        adoptionRate: "Strong, driven by its simplicity and the backing of Hugging Face. High GitHub star count and consistent PyPI downloads reflect a healthy user base. It is frequently used in tutorials and workshops.",
+        uniqueFeatures: [
+            "**Code-as-Action Paradigm**: The LLM generates and executes Python code snippets, which is more expressive and efficient.",
+            "**Minimalist and Transparent Design**: Avoids heavy abstractions, with an easily understandable core codebase.",
+            "**Emphasis on Secure, Sandboxed Execution**: Provides first-class support for Docker, E2B, and WASM sandboxes.",
+            "**Auto-Healing/Self-Correction**: The agent can observe code errors and automatically rewrite and retry until it succeeds."
+        ],
+        paradigm: "Minimalist Code-as-Action",
+        idealUseCases: "Quick automation tasks, prototyping, tasks requiring complex logic easily expressed in code."
+    },
+    "Google ADK": {
+        popularity: { stars: 11400, downloads: 2600000, text: "Rapidly achieved significant popularity, boosted by its origin as an official Google framework. It has strong GitHub metrics and over 2.6 million total PyPI downloads, attracting developers working within the Google Cloud ecosystem." },
+        documentation: "Extensive and well-structured, with installation guides, quickstarts, tutorials, and a full API reference. A key strength is the `adk-samples` repository with ready-to-use agents. Some early feedback noted a steep learning curve due to scattered information.",
+        learningCurve: { rating: 1, text: "Medium to High. Described as 'code-first,' it requires a solid understanding of Python and software engineering. The complexity and boilerplate can be high, and the variety of agent types can add to the cognitive load for newcomers." },
+        enterpriseReadiness: { rating: 5, text: "Explicitly designed for enterprise use. Its primary strength is deep, native integration with Google Cloud, with seamless deployment to Vertex AI Agent Engine and built-in connectors for enterprise systems like Salesforce and SAP. A very strong choice for organizations on GCP." },
+        longevity: "Highly secure. As an official, strategic project from Google with a weekly release cadence, its long-term support, evolution, and relevance are all but guaranteed.",
+        adoptionRate: "Strong and growing steadily. Solid GitHub and PyPI metrics reflect a healthy initial uptake. Its promotion through official Google channels and hackathons ensures it reaches a wide audience.",
+        uniqueFeatures: [
+            "**Deep Google Cloud Integration**: Its 'superpower' is native deployment to Vertex AI and built-in tools for GCP services.",
+            "**Code-First Development Philosophy**: Emphasizes Pythonic code, testability, and versioning.",
+            "**Modular Multi-Agent Systems**: Designed for composing flexible hierarchies of specialized agents.",
+            "**Rich and Interoperable Tool Ecosystem**: Supports a wide variety of tools, including from LangChain and MCP.",
+            "**Built-in Evaluation and Observability**: Includes capabilities for evaluating agent performance and integrating with Cloud Trace."
+        ],
+        paradigm: "Ecosystem-Integrated Toolkit",
+        idealUseCases: "Enterprise applications heavily invested in the Google Cloud Platform (GCP)."
+    },
+    "AutoGen": {
+        popularity: { stars: 20000, downloads: null, text: "One of the most popular and influential frameworks, frequently compared with LangChain and CrewAI. Its focus on multi-agent conversations has made it a favorite for research and complex problem-solving scenarios." },
+        documentation: "Extensive resources reflecting its origins in Microsoft Research. However, users note a higher technical barrier to entry compared to frameworks like CrewAI, requiring a deeper understanding of multi-agent systems and conversation design patterns.",
+        learningCurve: { rating: 1, text: "Medium to High. It is a more low-level, agent-first framework requiring developers to explicitly define agent interaction patterns. This requires a greater initial investment in learning its concepts." },
+        enterpriseReadiness: { rating: 4, text: "Well-suited for enterprise use, particularly for internal automation and R&D. It is LLM-provider agnostic and includes features for observability and debugging. Its ability to create collaborating specialist agents is highly applicable to business and software development processes." },
+        longevity: "Very secure. Originating from Microsoft Research and actively developed as an open-source project, its continued development is supported by one of the world's largest technology companies.",
+        adoptionRate: "High, especially within research communities and enterprise teams focused on sophisticated internal automation. Its strengths in code generation and autonomous task-solving have led to strong adoption for complex backend workflows.",
+        uniqueFeatures: [
+            "**Multi-Agent Conversation Orchestration**: Its core strength is facilitating complex, dynamic conversations between multiple agents.",
+            "**Human-in-the-Loop Integration**: Seamlessly integrates human feedback into the agent conversation loop.",
+            "**Strong Code Generation and Execution**: Excellent built-in capabilities for agents that write, execute, and debug code.",
+            "**AutoGen Studio**: A no-code, graphical interface for designing and benchmarking multi-agent workflows.",
+            "**Event-Driven and Asynchronous Architecture**: Efficiently handles concurrent messages and long-running operations."
+        ],
+        paradigm: "Multi-Agent Conversation",
+        idealUseCases: "R&D, complex problem-solving, internal automation, software development tasks."
+    },
+     "Mastra": {
+        popularity: { stars: 3, downloads: null, text: "An emerging framework, primarily for TypeScript, not Python. Its popularity is currently nascent, but a growing collection of community projects suggests an active and developing user base." },
+        documentation: "Provides official documentation and a starter template that serves as an interactive guide. A Discord server with over 1000 members provides community support.",
+        learningCurve: { rating: 3, text: "Low. Designed to be accessible for TypeScript/JavaScript developers. It's a 'batteries-included' framework with a streamlined setup process and an integrated playground for testing.", },
+        enterpriseReadiness: { rating: 3, text: "Being developed with enterprise use in mind, with primitives for durable workflows and observability. However, it's in an earlier stage of maturity and lacks the public case studies of its Python counterparts." },
+        longevity: "Still being established, but led by an experienced co-founder (from Gatsby.js). Built on modern technologies like TypeScript and the Vercel AI SDK, aligning it with current development trends.",
+        adoptionRate: "In its early growth phase. Grassroots activity on GitHub suggests it is resonating with a segment of the developer community, particularly within the TypeScript ecosystem.",
+        uniqueFeatures: [
+            "**TypeScript-Native Framework**: Provides full type safety for JavaScript/TypeScript developers.",
+            "**Batteries-Included Approach**: Aims to be an all-in-one framework, avoiding 'glue code'.",
+            "**Integrated Development Dashboard**: Comes with a local dev server and dashboard for testing and debugging.",
+            "**Durable Workflows with XState**: Uses the robust XState library for managing state machines.",
+            "**Built on Vercel AI SDK**: Leverages the popular Vercel AI SDK for easy model switching."
+        ],
+        paradigm: "TypeScript Agent Framework",
+        idealUseCases: "AI-powered web applications, backend services in the Node.js/TypeScript ecosystem."
+    },
+};
+
+const recommendationsData = {
+    "Overall Most Promising Frameworks": `
+        <p class="mb-4">Two frameworks currently stand out as the most promising for a wide range of serious, production-oriented applications, albeit for different reasons:</p>
+        <ul class="list-disc list-inside space-y-3">
+            <li><strong>LangGraph:</strong> It is the clear leader for building complex, mission-critical systems where control, auditability, and reliability are non-negotiable. Its robust enterprise ecosystem provides a complete, end-to-end solution, making it a sound strategic choice for organizations with mature engineering practices.</li>
+            <li><strong>CrewAI:</strong> It is the leader in developer experience and accessibility. Its intuitive, role-based paradigm makes it exceptionally fast for building and prototyping collaborative multi-agent systems. Its strong community and clear path to production make it an equally strong strategic choice, particularly for teams that need to deliver value quickly.</li>
+        </ul>
+    `,
+    "Use-Case Specific Recommendations": `
+        <p class="mb-4">The optimal choice of framework is highly dependent on the specific context of the project.</p>
+        <ul class="list-disc list-inside space-y-3">
+            <li><strong>For Rapid Prototyping & High Accessibility:</strong> <strong>CrewAI</strong> is the top recommendation for its speed and ease of use. <strong>SmolAgents</strong> is an excellent alternative for a minimalist, code-first approach.</li>
+            <li><strong>For Complex, State-Aware Enterprise Workflows:</strong> <strong>LangGraph</strong> is the undisputed choice. <strong>Google ADK</strong> is a powerful competitor, especially for organizations on GCP.</li>
+            <li><strong>For Performance-Critical & Highly Scalable Systems:</strong> <strong>Agno</strong> should be at the top of the evaluation list for its speed and memory efficiency.</li>
+            <li><strong>For Structured, Type-Safe, Single-Agent Tasks:</strong> <strong>Pydantic AI</strong> is the ideal framework when data integrity is the primary challenge.</li>
+        </ul>
+    `,
+    "Future Outlook and Innovative Standouts": `
+        <p class="mb-4">The agentic landscape continues to evolve at a breakneck pace. Several frameworks stand out as particularly innovative:</p>
+        <ul class="list-disc list-inside space-y-3">
+            <li><strong>Agno:</strong> Its early and aggressive focus on performance and efficiency positions it perfectly to meet future demand as operational costs and latency become critical business considerations.</li>
+            <li><strong>SmolAgents:</strong> The "code-as-action" paradigm is a genuinely novel approach. As LLMs become more proficient at code generation, this method could become more powerful and mainstream.</li>
+            <li><strong>Google ADK:</strong> The power of deep platform integration cannot be underestimated. As Google continues to build out the ADK and its connections to GCP services, it will become an increasingly compelling all-in-one solution for enterprises on Google Cloud.</li>
+        </ul>
+    `
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const navContainer = document.getElementById('nav-container');
+    const detailsContent = document.getElementById('details-content');
+    const accordionContainer = document.getElementById('accordion-container');
+    const tableBody = document.getElementById('summary-table-body');
+
+    const frameworkNames = Object.keys(frameworkData);
+    let currentFramework = frameworkNames[0];
+
+    function renderNav() {
+        navContainer.innerHTML = frameworkNames.map(name => `
+            <button class="nav-button px-4 py-2 text-sm font-semibold rounded-full shadow-sm bg-white text-gray-700 hover:bg-gray-50 ${name === currentFramework ? 'active' : ''}" data-framework="${name}">
+                ${name}
+            </button>
+        `).join('');
+    }
+
+    function renderFrameworkDetails(name) {
+        currentFramework = name;
+        const data = frameworkData[name];
+        if (!data) return;
+
+        detailsContent.innerHTML = `
+            <h3 class="text-3xl font-bold text-[#333] mb-2">${name}</h3>
+            <p class="text-md text-gray-500 mb-6 font-medium">${data.paradigm}</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-2">Popularity</h4>
+                    <p class="text-sm text-gray-600">${data.popularity.text}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-2">Documentation</h4>
+                    <p class="text-sm text-gray-600">${data.documentation}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-2">Learning Curve</h4>
+                    <p class="text-sm text-gray-600">${data.learningCurve.text}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-2">Enterprise Readiness</h4>
+                    <p class="text-sm text-gray-600">${data.enterpriseReadiness.text}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-2">Longevity</h4>
+                    <p class="text-sm text-gray-600">${data.longevity}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-2">Adoption Rate</h4>
+                    <p class="text-sm text-gray-600">${data.adoptionRate}</p>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h4 class="font-bold text-xl text-gray-800 mb-4">Unique Features</h4>
+                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                    ${data.uniqueFeatures.map(feature => `<li>${feature}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+        renderNav();
+    }
+
+    function renderSummaryTable() {
+        tableBody.innerHTML = frameworkNames.map(name => {
+            const data = frameworkData[name];
+            const curveTextMap = { 3: 'Low', 2: 'Medium', 1: 'High' };
+            return `
+                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                    <td class="py-3 px-4 font-medium">${name}</td>
+                    <td class="py-3 px-4">${data.paradigm}</td>
+                    <td class="py-3 px-4">${curveTextMap[data.learningCurve.rating]}</td>
+                    <td class="py-3 px-4">${'★'.repeat(data.enterpriseReadiness.rating)}${'☆'.repeat(5 - data.enterpriseReadiness.rating)}</td>
+                    <td class="py-3 px-4 text-sm">${data.idealUseCases}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    function renderAccordion() {
+        accordionContainer.innerHTML = Object.entries(recommendationsData).map(([title, content], index) => `
+            <div class="bg-white rounded-lg shadow-md">
+                <h2>
+                    <button type="button" class="accordion-button flex items-center justify-between w-full p-5 font-medium text-left text-gray-700 hover:bg-gray-100 rounded-lg" data-accordion-target="#accordion-body-${index}">
+                        <span>${title}</span>
+                        <svg class="w-6 h-6 shrink-0 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </h2>
+                <div id="accordion-body-${index}" class="accordion-content p-5 border-t border-gray-200">
+                    <div class="text-gray-600">${content}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    navContainer.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const frameworkName = e.target.dataset.framework;
+            renderFrameworkDetails(frameworkName);
+        }
+    });
+
+    accordionContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('.accordion-button');
+        if (button) {
+            const contentSelector = button.getAttribute('data-accordion-target');
+            const content = document.querySelector(contentSelector);
+            const icon = button.querySelector('svg');
+
+            if (content) {
+                button.classList.toggle('active');
+                icon.classList.toggle('rotate-180');
+                
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            }
+        }
+    });
+
+    function initCharts() {
+        const popCtx = document.getElementById('popularityChart').getContext('2d');
+        const profileCtx = document.getElementById('profileChart').getContext('2d');
+
+        const chartData = frameworkNames.map(name => ({
+            name: name,
+            stars: frameworkData[name].popularity.stars || 0,
+            learningCurve: frameworkData[name].learningCurve.rating,
+            enterpriseReadiness: frameworkData[name].enterpriseReadiness.rating
+        })).sort((a, b) => b.stars - a.stars);
+
+        new Chart(popCtx, {
+            type: 'bar',
+            data: {
+                labels: chartData.map(d => d.name),
+                datasets: [{
+                    label: 'GitHub Stars',
+                    data: chartData.map(d => d.stars),
+                    backgroundColor: 'rgba(216, 124, 94, 0.7)',
+                    borderColor: 'rgba(216, 124, 94, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value / 1000 + 'k';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.raw.toLocaleString()} stars`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const radarColors = [
+            'rgba(216, 124, 94, 0.5)', 
+            'rgba(84, 112, 124, 0.5)', 
+            'rgba(144, 178, 159, 0.5)', 
+            'rgba(242, 183, 104, 0.5)', 
+            'rgba(191, 124, 131, 0.5)',
+            'rgba(128, 128, 128, 0.5)',
+            'rgba(0, 128, 128, 0.5)',
+            'rgba(128, 0, 128, 0.5)'
+        ];
+        
+        const radarBorderColors = [
+            'rgb(216, 124, 94)', 
+            'rgb(84, 112, 124)', 
+            'rgb(144, 178, 159)', 
+            'rgb(242, 183, 104)', 
+            'rgb(191, 124, 131)',
+            'rgb(128, 128, 128)',
+            'rgb(0, 128, 128)',
+            'rgb(128, 0, 128)'
+        ];
+
+        new Chart(profileCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Enterprise Readiness', 'Ease of Use (Learning Curve)'],
+                datasets: chartData.map((d, i) => ({
+                    label: d.name,
+                    data: [d.enterpriseReadiness, d.learningCurve],
+                    backgroundColor: radarColors[i % radarColors.length],
+                    borderColor: radarBorderColors[i % radarBorderColors.length],
+                    borderWidth: 2,
+                    pointBackgroundColor: radarBorderColors[i % radarBorderColors.length],
+                    pointRadius: 4
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        pointLabels: {
+                            font: { size: 12 }
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            backdropColor: 'rgba(255, 255, 255, 0)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    renderFrameworkDetails(currentFramework);
+    renderSummaryTable();
+    renderAccordion();
+    initCharts();
+});
+</script>
+
+</body>
+</html>
