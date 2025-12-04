@@ -1,0 +1,44 @@
+# BigQuery SQL Agent Requirements
+# Core framework
+agno 
+
+# Google Cloud and BigQuery dependencies
+google-cloud-bigquery
+google-genai
+sqlalchemy-bigquery[bqstorage]
+pandas-gbq
+
+# Data processing
+pandas
+pyarrow
+requests
+
+# Vector databases
+pgvector
+chromadb
+
+# Database connections
+psycopg[binary]
+sqlalchemy
+
+# Visualization
+altair
+streamlit
+ddgs
+
+# Utilities
+python-dotenv
+pyyaml
+rich
+typer
+ 
+# Utilities
+pydantic 
+
+fastapi 
+uvicorn 
+ 
+pytest 
+pytest-asyncio 
+ipykernel
+ipywidgets
